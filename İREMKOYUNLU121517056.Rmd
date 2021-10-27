@@ -1,0 +1,684 @@
+---
+title: "RiseInTemp_dataset"
+author: "IREM KOYUNLU"
+date: "15 05 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+<style>
+/* Your other css */
+    body {
+      background-image: url(https://wallpaperaccess.com/full/981549.jpg);
+      background-position: center center;
+      background-attachment: fixed;
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+    }
+.section .reveal .state-background {
+    background-image: url(https://wallpaperaccess.com/full/981549.jpg);
+    background-position: center center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+}
+</style>
+
+# **ILERI REGRESYON ANALIZI**
+# KURESEL ISINMA (IKLIM DEGISIKLIGI)
+
+##### KAYNAK:https://www.kaggle.com/vageeshabudanur/riseintemp-dataset
+<style>
+div.green pre.r { background-color:lightgreen; }
+</style>
+
+<div class = "green">
+```{r fotograf, echo=FALSE, message=FALSE, warning=FALSE}
+knitr::include_graphics("kureselisinma.jpg")
+```
+<div class = "green">
+```{r data, message=FALSE, warning=FALSE}
+library(readr)
+      TempData=read.csv("C:/Users/CASPER/Desktop/climate_change.csv", header=T)
+
+
+head(TempData,10)
+```
+
+### Veri Seti Aciklamasi ;
+Gecen yuzyil boyunca ortalama kuresel sicakligin artmakta oldugunu belgeleyen bircok calisma yapilmistir. Kuresel sicaklikta devam eden artisin sonuclari korkunc olacaktir. Artan deniz seviyeleri ve artan asiri hava olaylari sikligi milyarlarca insani etkileyecektir.
+Bu veri, ortalama kuresel sicaklik ve diger bircok faktor arasindaki iliskiyi icermektedir. 308 gozlem 11 sutun bulunmakta.
+
+Climate_change.csv dosyasi, Mayis 1983 ile Aralik 2008 arasindaki iklim verilerini icerir.
+
+CO2, N20 ve CH4 ppmv cinsinden ifade edilir (hacimce milyonda parca sayisi;Yani, 397 ppmv CO2, CO2'nin atmosferin toplam hacminin 397 milyonuncu kismini olusturdugu anlamina gelir).
+CFC.11 ve CFC.12, ppbv cinsinden ifade edilir (hacim basina milyarda parca).
+
+### Degiskenler:
+ 
+Year (Yil ): Verinin gozlem yili.
+
+Month (Ay): Verinin gozlem ayi.
+
+MEI: Cok degiskenli El Nino Guney salinim indeksi (MEI). Gucunun bir olcusu; El Nino / La Nina-Guney salinim (kuresel sicakliklari etkileyen Pasifik Okyanusu'nda bir hava etkisi) Guney Amerika'nin Bati kiyisindaki Buyuk Okyanus'ta yuzey sularinin isinmasina Ispanyolca'da "erkek cocuk" anlamina gelen El Nino, sogumasina ise "kiz cocuk" anlamina gelen La Nina deniliyor. El Nino, ormanlarin ve bitki ortusunun karbondioksit emilimini azaltiyor. Bu nedenle daha fazla karbondioksit atmosferde kaliyor bu da kuresel sicakligi etkiliyor.
+
+CO2: Atmosferik karbondioksit konsantrasyonlari (CO2). Hava sicak oldugunda karbondioksit miktarinin fazla, soguk oldugunda ise karbondioksit miktarinin az oldugunu bilinmekte.Kuresel sicaklik artisinin en buyuk etkenlerinden biridir.
+
+CH4: Metan (CH4). Karbondioksitten 23 kat daha guclu olan metan gazi, kuresel sicaklik artisinin en onemli unsurlarindan biri.
+
+N2O: Nitroz oksit (Azot Protoksit). Nitroz oksit gazi da dogal kaynaklar , suni gubre kullanimi ve endustri gibi insani kaynaklardan olusuyor, kuresel sicaklik artisini etkiliyor.
+
+CFC.11: Trikloroflorometan (CCl3F; yaygin olarak CFC-11 olarak adlandirilir.) Ozon tabakasinin delinmesine yol acan kimyasal gaz (evlerin yalitiminda kullaniliyor ). kuresel sicaklik artisini etkiliyor.
+
+CFC.12: Diklorodiflorometan (CCl2F2; yaygin olarak CFC-12 olarak adlandirilir.) Sera etkisi yaratan zararli gaz,kuresel sicaklik artisini etkiliyor. 
+
+TSI:W/m2 cinsinden toplam gunes isinimi (TSI). (gunes enerjisinin birim alan basina biriktirildigi oran). Gunes lekeleri ve diger gunes olaylari nedeniyle, gunes tarafindan verilen enerji miktari zamanla buyuk olcude degisir.
+
+Aerosols: 550 nm'de ortalama stratosferik aerosol optik derinligi. Bu degisken volkanlarla baglantilidir, cunku volkanik patlamalar atmosfere yeni parcaciklarin eklenmesiyle sonuclanir, bu da gunes enerjisinin ne kadarinin uzaya yansidigini etkiler.
+
+Temp:Bu veride ortalama kuresel sicaklik ve referans degeri arasindaki santigrat derece farki. Bu bagimli degiskendir.
+
+##### Degiskenleri Aciklamada Kullanilan Ek Bilgi Kaynaklari:
+https://www.bbc.com/turkce/haberler-46308251
+http://www.imo.org.tr/resimler/ekutuphane/pdf/16154_50_07.pdf
+
+
+Degisken turleri dogru mu diye kontrol icin ozetine bakalim;
+
+<div class = "green">
+```{r veri ozet, message=FALSE, warning=FALSE}
+summary(TempData)
+```
+
+Summary kodu ile bakildiginda month duzeltilmeli.Kategorik degisken icin mean hesaplanmaz.
+
+```{r factor, message=FALSE, warning=FALSE}
+
+TempData$Month<-factor(TempData$Month)
+summary(TempData)
+
+```
+
+
+Modelimizi olusturalim .Bu verimizde bagimli degiskenimiz Temp tir(yanit degiskeni). Year ve month degiskenleri haric diger degiskenler aciklayici degiskenimiz olacaktir. 
+
+```{r model, message=FALSE, warning=FALSE}
+lmod1 <- lm( Temp~
+               MEI+
+               CO2+
+               CH4+
+               N2O+
+               CFC.11+
+               CFC.12+
+               Aerosols+
+               TSI ,data=TempData) #Olusturdugum modeli lmdod1 diye adlandirdim.
+```
+
+
+Olusturdugum modeli lmod1 diye adlandirdim.
+
+```{r fitted, message=FALSE, warning=FALSE}
+head(fitted(lmod1),15) #Head komutu ile sadece 15 tanesini gosterdik.
+```
+
+Fitted komutu lm ile kurulan modelin fit edilmis y sapka degerlerini verir.
+
+```{r residuals, message=FALSE, warning=FALSE}
+head(residuals(lmod1),15) #Head komutu ile sadece 15 tanesini gosterdik.
+```
+
+Kurulan regresyon modelinin artiklarini verir.
+
+#  1- HATA ILE ILGILI VARSAYIMLAR
+
+
+## A- NORMALLIK VARSAYIMININ TESTLERI
+
+Regresyon analizinde kullandigimiz tum hipotez testleri ve guven araliklari normallik varsayimina dayalidir.Bu nedenle normallik varsayiminin kontrolu onemlidir.Normallik varsayimi artiklar uzerinden Q-Q plot yardimi ile inceleyelim;
+
+
+Onceklikle Q-Q Plot cizdirelim ;
+
+```{r Q-Q Plot, message=FALSE, warning=FALSE}
+qqnorm(residuals(lmod1),ylab="Residuals",col="darkblue")
+qqline(residuals(lmod1),col="red")
+```
+
+Q-Q Plot grafigi artiklara karsilik cizilir. Grafigi cizdirdigimizde artiklar Q-Q Plot cizgisi uzerinde olur ise verimiz normal dagiliyor demektir. Grafikler yaniltici oldugundan testlere bakilir.
+Verimiz Q-Q Plot cizgisi uzerinde ciktigi icin normal dagildigini varsayariz.Grafikler yaniltici oldugundan diger testlere bakmaliyiz.
+Normallik sinamasi icin Shapiro-Wilk Testi (gozlem sayisi 50’nin altindaysa) ve Kolmogorov-Smirnov Testi (gozlem sayisi 50’nin ustundeyse) kullanilir.
+Simdi testlere bakalim ;Gozlem sayimiz 50 den fazla oldugu icin Kolmogorov-Smirnov Testine bakilmasi gerekir.
+
+#### KOLMOGOROV SMIRNOV TEST
+
+H0:Artiklar normal dagiliyor.
+H1:Artiklar normal dagilmiyor.
+
+Normal dagilimin kontrolu icin gelistirilmis bir test.
+Gozlem sayisi 50 nin uzerinde ise kullanilir.
+
+```{r Kolmogorov Smirnov Test, message=FALSE, warning=FALSE}
+ks.test(residuals(lmod1),"pnorm",
+        mean=mean(residuals(lmod1)),
+        sd=sd(residuals(lmod1)))
+```
+
+Veri setimde gozlem sayim 50 nin uzerinde oldugundan Kolomogorov Smirnov Testi yapilir.Test sonucumda p-value=0.8758 cikti. 0.05 ' den buyuk oldugu icin H0 hipotezi kabul edilir yani artiklarin dagilimi normaldir.
+
+## B- SABIT VARYANS
+
+Modelimin oncelikle plotuna bakiyorum;
+Sabit varyansi incelemek icin y sapkaya karsi artiklarin(e) grafigini cizdirmeliyiz;
+
+```{r plot, message=FALSE, warning=FALSE}
+plot( fitted(lmod1), residuals(lmod1),xlab="Fitted y ",ylab="Residuals",main="Artiklar-Tahmin Grafigi",col="purple")
+abline(h=0,col="orange") 
+
+```
+
+0 etrafinda nasil dagildigini gormek icin h=0 ile yataya cizgi ekledik. Duzgun bir grafik cikmadigi icin sabit varyansli mi emin olamiyoruz.Guvenilir olmasi icin degisken varyanslilik testlerine de bakmaliyiz.
+
+### - DEGISKEN VARYANS TESTLERI
+
+#### BREUSCH PAGAN TEST
+
+H0:Heterosce Dosticity (Degisken Varyanslilik) problemi yok.
+H1:Heterosce Dosticity (Degisken Varyanslilik) problemi vardir.
+
+```{r Hazir Breusch Pagan Test, message=FALSE, warning=FALSE}
+library(lmtest)
+bptest(lmod1,data=TempData) 
+```
+
+Breusch Pagan Test sonucumda p-value=0.4896 cikti. 0.05 ' den buyuk oldugu icin H0 hipotezi kabul edilir yani HETEROSCE DOSTICITY(degisken varyanslilik) problemi yoktur.
+
+#### WHITE TEST
+
+```{r White Test, message=FALSE, warning=FALSE}
+wmod<-lm(residuals(lmod1)^2~fitted(lmod1)+fitted(lmod1)^2,TempData)
+summary(wmod)
+```
+
+White Test sonucumda p-value= 0.9105 cikti. 0.05 ' den buyuk oldugu icin H0 hipotezi kabul edilir yani HETEROSCE DOSTICITY(degisken varyanslilik) problemi yoktur.Breusch Pagan Test sonucu ,White Testten daha guvenilirdir.
+
+
+# 2- AYKIRI GOZLEMLERIN BELIRLENMESI  (OLAGANDISI GOZLEMLER BULMA)
+
+ 3 farkli tip aykiri gozlem vardir;
+
+Outlier;Hatalari buyuk olan gozlemlere denir.(Model tarafindan iyi tahmin edilemez.)
+Influential;Parametreleri (betalari) degistirir.
+Leverage; x uzayinin merkezine uzak olan gozlemlere denir.
+
+## A)LEVERAGE 
+
+Leverage tespiti icin hat matrisinin kosegen elemanlari kullanilir. Herhangi bir gozlemin elemani cut point degerinden buyukse o gozleme Leverage suphesiyle yaklasilir.
+
+Once regresyon modeli kurulur hat valuesle degerler hesaplanir;
+ n: Gozlem sayisi.
+ p: Degisken sayisi+1,
+ Cut point degerim; 2p/n . 
+Cut point degerimden buyuk olan hat matrisinin kosegen elamani leverage adayi demektir.
+
+```{r Hat values, message=FALSE, warning=FALSE}
+
+hatv <- hatvalues(lmod1) #sapka matrisinin kosegen elemanlari
+head(hatv,15)
+sum(hatv)
+```
+
+cut point degerim 2p/n(p: degisken sayisi+1 ,n:gozlem sayisi) den buyukse o gozlem leverage olabilir diye dusunuyoruz.
+Kurdugum regresyon modelinde 8 degiskenim oldugu icin p:8+1=9 (Beta0 ile  birlikte) tane gozlemim var.
+
+Cut point degerim : 2p/n oldugu icin. 2.p=2.9=18
+
+```{r cut point, message=FALSE, warning=FALSE}
+
+cut <- 18/length(TempData$Temp)
+cut 
+```
+
+Cut point degerim 0.05844156 cikti.
+
+```{r cut pointten buyuk degerler, message=FALSE, warning=FALSE}
+which(hatv>cut)
+```
+
+Cut Pointimden buyuk olan hat matrisinin kosegen elemanlari,Leverage adaylaridir. 1,2,3,4,5,6,103,104,105,106,107,108,109,110,112,113 ve 173. gozlemler leverage adaylaridir.
+
+Half-Normal Plot ile gorsellestirme yapalim;
+
+#### HALF-NORMAL PLOT
+
+```{r Half-Normal, message=FALSE, warning=FALSE}
+library(faraway)
+halfnorm(hatv,5,ylab="leverage",main="Leverage Icın Half-Normal Plot") # sira disi gozlemlerimin 5 ini gosterdim
+
+```
+
+Hat matrisi icin cizdirdigimiz half-normal plot grafiginde sadece en aykiri 5 gozlemimin gosterilmesini istedik. Cut point sonucumuz ile Half-Normal grafiginde gozuken sonuclar ayni cikmistir.
+
+#### VARSAYIM BOZUNUMU KONTROLU
+
+Verimizde varsayim bozunumu yok ise ham artiklar uzerinden cizdirilen Q-Q Plot ile standartlastirilmis artiklar uzerinden cizdirilmis olan Q-Q Plot gorsel olarak birbirlerine benzemeli.
+
+```{r varsayim bozunumu, message=FALSE, warning=FALSE}
+par(mfrow=c(1,2)) #iki grafigide yan yana gosterir
+qqnorm(rstandard(lmod1),main="Stand. Artiklarin Q-Q Plotu",col="orange") #standartlastirilmis artiklarin qq-plot u
+qqline(rstandard(lmod1),col="purple")
+
+qqnorm(residuals(lmod1),main="Ham Artiklarin Q-Q Plotu",col="turquoise") #ham artiklarin qq-plot u
+qqline(residuals(lmod1),col="red")
+```
+
+Grafiklerde de gozuktugu uzere varsayim bozunumu yoktur.Iki grafikte de degiskenlerin cogu cizginin ustunde cikmistir ve birbirine benzemektedir.
+
+## B)OUTLIER
+
+#### STUDENTIZED ARTIKLAR BENFERRONI TESTI
+
+```{r Studentized artiklar, message=FALSE, warning=FALSE}
+stud <- rstudent(lmod1)
+stud[which.max(abs(stud))]
+```
+
+Standartlastirilmis artiklarimin mutlakca en buyugune bakiyoruz.
+En buyuk standartlastirilmis artik (rstudent) degerim 184. gozlem olup degeri 3.614831 dir.
+
+Cut point belirlemeliyiz,cut point degeri alfa/2n dir.
+Rstudentler (n-p-1) serbestlik dersceli t-dagilimina sahiptir.
+
+```{r,message=FALSE, warning=FALSE}
+qt(0.05/(length(stud)*2) , (length(TempData$Temp)-9-1)) #(alfa/2n),(n-p-1)
+```
+
+Mutlakca cut point degerimden buyuk olan standartlastirilmis artik degeri bizim icin outlier olcaktir.
+Verimde en buyuk mutlak standartlastirilmis artik degerini 184. gozlem =3.614831 olarak bulmustuk.
+184. gozlem =|3.614831| < |3.820115| oldugundan 184. gozlem bizim icin outlier degildir.
+
+Outlier rstudent tipi artiklar icin halfnorm cizdirmeye gerek yok.
+
+
+## C)INFLUENTIAL
+
+Influential Parametreleri (betalari) degistirir.Bir etkili gozlem ayni zamanda bir outlier veya leverage olabilir. Etkinligi olcmek icin cook-distance yontemini kullanmaliyiz.
+
+#### COOK-DISTANCE
+
+```{r cook distance, message=FALSE, warning=FALSE}
+cook <- cooks.distance(lmod1)
+head(cook,15)
+```
+
+```{r max cook, message=FALSE, warning=FALSE}
+max(cook)
+
+```
+
+En buyuk cook distance degerim 0.04936055 dir ve bu deger 105. gozlemde vardir.
+
+#### HALF-NORMAL PLOT
+
+```{r influential icin half norm, message=FALSE, warning=FALSE}
+halfnorm(cook,1,ylab="Cook’s distances",main="Influential Icın Half-Normal (Cook) Plot")
+cook[105]
+```
+
+Cook distance icin cizdirdigimiz half-normal plot grafiginde en etkili gozlemimin gosterilmesini istedik.En buyuk cook distance degerim 105.gozleme aittir. Cook Distance sonucum ile half-normal plot grafigindeki sonucum ayni ciktigindan 105. gozlemim etkili gozlemdir.
+
+Bu gozlemi veriden cikardigimizda modelde ki degisimin nasil olacagini inceleyelim;
+
+```{r yeni model, message=FALSE, warning=FALSE}
+lmod2 <- lm(Temp~
+               MEI+
+               CO2+
+               CH4+
+               N2O+
+               CFC.11+
+               CFC.12+
+               Aerosols+
+               TSI ,data=TempData, subset = cook < max(cook))
+```
+
+Iki model arasi degisime bakarsak;
+
+```{r iki model farki, message=FALSE, warning=FALSE}
+summary(lmod1)
+summary(lmod2)
+```
+
+Iki model icin summary kodunu kullandigimizda, modeller arasinda degisimler vardir.Adjusted R-squared degerimiz az da olsa artmistir.
+CH4 degiskeninin katsayisinda gozle gorulur bir degisim olmustur.Tahminlerin tek bir gozleme bu kadar hassas olmasi istenmeyen bir durumdur.
+
+Bu amacla dfbeta degerine bakmaliyiz.
+
+Dfbeta her bir degisken icin ayri ayri dfbeta degeri veriyor.
+
+
+```{r dfbeta, message=FALSE, warning=FALSE}
+dfbeta <- dfbeta(lmod1)
+head(dfbeta,5)
+```
+
+dfbeta icin cut point degeri hesaplamaliyiz. cut point:2/sqrt(n)
+
+
+```{r dfbeta cut point, message=FALSE, warning=FALSE}
+cut <- 2/sqrt(length(TempData$Temp))
+cut
+```
+
+Cut point degerim  0.1139606 cikti. Cut pointten buyuk olan dfbeta degerleri bizim icin etkili gozlemdir.
+
+dfbeta icin half normal plota cizdirirsek;
+
+#### HALF-NORMAL PLOT
+
+```{r dfbeta half-normal plot, message=FALSE, warning=FALSE}
+halfnorm(dfbeta,1,ylab="infuential",main="Influential Icın Half-Normal (Cook) Plot") 
+```
+
+Dfbeta icin half normal plot cizdirdigimizde 212. gozlemimiz etkili gozlemdir. Diger gozlemlerde etkilidir ama sadece en etkili olani gosterdik.
+
+Dfbeta da her bir degiskenin etkisine ayri ayri plot cizdirerek bakmaliyiz;
+
+```{r dfbeta plot, message=FALSE, warning=FALSE}
+plot(dfbeta(lmod1)[,5],ylab = "change in CH4",main="CH4 Icın Plot",col="blue") # CH4 in model uzerine etkisine bakiyoruz.
+abline(h=0,col="orange")
+```
+
+Dfbeta kullanimi zordur.Burada dfbetaya gore modelde CH4 icin etkinlige bakiyoruz. Dfbeta da her bir degiskenin degisimini ayri ayri bakmak gerekiyor bu Dfit kullanalim;
+
+
+Dffit : Betalar arasindaki fark yerine tahminler arasindaki farka dayali bir olcuttur.
+
+Dffit icin cut point= 2*sqrt(p/n) 
+Cut point degerinden buyuk olanlar etkili gozlemdir denir.
+
+```{r dffit, message=FALSE, warning=FALSE}
+dffit <- dffits(lmod1)
+head(dffit,15)
+```
+
+Dffit icin cut point degerim;
+
+```{r dffit cut point, message=FALSE, warning=FALSE}
+cut <- 2*sqrt(9/length(TempData$Temp))
+cut
+```
+
+Cut point degerim 0.3418817 cikti. Cut point degerimden buyuk olan gozlemlere bakalim;
+
+```{r message=FALSE, warning=FALSE}
+which(abs(dffit)>cut)
+```
+
+Dffit icin cut pointi asan etkili gozlemleri gosterdik.7,20,63,83,105,106,115,127,178,183,184,190,210,211,212,236,297 ve 299. gozlemlerim etkili gozlemdir.
+
+Half normal plot cizdirelim;
+
+#### HALF-NORMAL PLOT
+
+Dffit icin half normal plota bakarsak;
+
+```{r message=FALSE, warning=FALSE}
+halfnorm(dffit,5,ylab="influential",main="Influential Icın Half-Normal (Dffit) Plot") 
+```
+
+Dffit icin half normal plot uzerinden en etkili 5 gozleme baktim.Diger gozlemlerde etkilidir ama sadece en etkili 5 tanesini gosterdik.
+
+# 3)ACIKLAYICI DEGISKENLERLE ILGILI PROBLEMLER
+
+## A)IC ILISKI (COLLINEARITY)
+
+Iki degisken arasi lineer iliskiyi gosterir.Eger bir aciklayici degisken ve bir diger aciklayici degiskenin veya degiskenlerin lineer bir kombinasyonlari ise bu durumda x transpoz x matrisi (X'X) singuler olur ve tersi alinamaz. Bu durumdan ilgili degiskenlerden biri modelden cikartilarak kurtulunur.
+Gozlem sayisi arttikca ic iliski durumu azalir.
+
+```{r message=FALSE, warning=FALSE}
+lmod1 <- lm( Temp~
+               MEI+
+               CO2+
+               CH4+
+               N2O+
+               CFC.11+
+               CFC.12+
+               Aerosols+
+               TSI ,data=TempData)
+summary(lmod1)
+```
+
+Regresyon modelimiz icin p-value degeri yaklasik=0 yani 0.05 den kucuk oldugundan h0 hipotezi reddedilir yani kurulan model anlamlidir. Fakat model anlamli iken aciklayici degiskenlerimizden CH4 degiskeninin  p-valuele degeri 0.05 den buyuktur yani degisken anlamsizdir.
+
+x in korelasyon matrisine bakalim;
+
+```{r korelasyon, message=FALSE, warning=FALSE}
+cor(TempData[,-c(1,2,11)])
+```
+
+Goruldugu uzere bagimsiz degiskenler arasindaki iliskinin korelasyonu en yuksek 0.98113544 N2O ve CO2 arasinda cikmistir ,bagimsiz degiskenimizle iliskilidir.
+
+Simdi Korelasyon plotuna bakalim;
+
+```{r message=FALSE, warning=FALSE}
+library(corrplot)
+corrplot(cor(TempData[,-c(1,2,11)]),method = "circle", order="hclust")
+```
+
+Yukaridaki korelasyon grafiginde Pozitif korelasyonlar mavi, negatif korelasyonlar kirmizi renkte gorulmektedir.Ornegin N2o ve CO2 arasindaki iliskinin korelasyonu yuksek cikmistir.Fakat CO2 ile MEI arasindaki iliskinin korelasyonu dusuktur.
+
+Verimizi matrix haline donusturelim ;
+
+```{r martix, message=FALSE, warning=FALSE}
+x <- model.matrix(lmod1)[,-11]
+head(x,5)
+```
+
+Verimizden yanit degiskenini cikarip sadece aciklayici degiskenlerden olusan matrix formuna donusturduk.
+
+x transpoz x in eigen valuelerini hesaplayalim;
+
+```{r eigen value, message=FALSE, warning=FALSE}
+e <- eigen(t(x)%*%x)$values
+e
+```
+
+#### KOSUL INDEKSI
+
+Kapa degeri : sqrt(en buyuk ozdeger / en kucuk ozdeger) 
+
+```{r kosul indeksi, message=FALSE, warning=FALSE}
+k <- sqrt(max(e)/min(e))
+k
+```
+
+Kapa degeri > 30 ise orta derece collinearity(ic iliski) ,
+Kapa degeri > 100 ise guclu collinearity (ic iliski) oldugunu gosterir.
+Verimizde cikan sonucumuza gore guclu collinearity (ic iliski) problemi vardir. Bagimsiz degiskeni diger degiskenler cok fazla etkiliyor.
+
+
+#### VIF 
+
+ Vif degerlerine bakmak icin car paketi icinde olan hazir kod kullanilir.
+ 
+```{r vif, message=FALSE, warning=FALSE}
+library(car)
+vif(lmod1)
+```
+
+Vif degerinin 10 dan buyuk olmasi collinearity probleminin oldugunu soyler.
+CO2,CH4,N2O,CFC.11,CFC.12 degiskenlerimin degerleri 10 dan buyuk cikti collinearity(ic iliski) problemi vardir.
+
+
+Hata ile ilgili varsayimlardan Otokorelasyon testlerini farkli bir veri uzerinden inceleyelim;
+
+#  1- HATA ILE ILGILI VARSAYIMLAR
+
+## C- OTOKORELASYON
+
+Hatalar ile bir kaydirilmis hatalar arasindaki otokorelasyondur.Korelasyon iki tane degisken vektor arasinda bakilir.
+Zaman serilerinde ,mekansal verilerde ve panel(kesit) verilerinde bu durum incelenmistir.
+Onceden fitted y lere karsilik grafik cizdiriyorduk simdi modelimizdeki zaman degiskenine karsi cizdirecegiz.
+
+# National Stock Exchange : Time Series
+
+##### KAYNAK: https://www.kaggle.com/atulanandjha/national-stock-exchange-time-series
+<style>
+
+div.turquoise pre.r { background-color:turquoise; }
+</style>
+
+<div class = "turquoise">
+```{r fotograf2, echo=FALSE, message=FALSE, warning=FALSE}
+
+knitr::include_graphics("Vwap.jpg")
+
+```
+
+<div class = "turquoise">
+```{r zaman serisi, message=FALSE, warning=FALSE}
+NSTS=read.csv("C:/Users/CASPER/Desktop/infy_stock.csv", header=T)
+head(NSTS,10)
+
+```
+
+### Veri Seti Aciklamasi ;
+
+Ulusal Borsa: Zaman Serisi.Zaman serisi analizi icin Hint bilisim sirketlerinin ulusal borsa veri setidir.
+Hindistan Ulusal Borsasi (NSE) Mumbai, Maharashtra, Hindistan'da bulunan bir Hint borsasidir. Ulusal Menkul Kiymetler Borsasi (NSE) 1992 yilinda yetkisiz bir elektronik borsa olarak kuruldu. Hindistan Hukumeti'nin talebi uzerine onde gelen finans kuruluslari tarafindan tesvik edildi. Hindistan'in ciro ile yaptigi en buyuk borsa. 1994 yilinda elektronik ekran tabanli ticareti baslatti. Daha sonra, 2000 yilinda ulkede turunun ilk ornegi olan endeks futures ve internet ticareti baslatti. 248 gozlem 15 sutun bulunmakta.
+
+
+### Degiskenler:
+
+Date: Verilerin kaydedildigi tarih.
+
+Symbol: Stokun NSE (Hindistan Ulusal Borsasi ) sembolu.
+
+Series: Bu hisse senedinin serisi.
+(EQ,BE,BL,BT,GC,IL)
+
+Prev Close: Son gun kapanis noktasi.
+
+Open: Mevcut gun acilis noktasi.
+
+High: Mevcut gunun en yuksek noktasi.
+
+Low: Mevcut gunun en dusuk noktasi.
+
+Last: Son islem gununde belirli bir hisse senedi veya borsa endeksi icin son teklif edilen islem fiyati.
+
+Close: Gecerli gun icin kapanis noktasi.
+
+VWAP: Hacim agirlikli ortalama fiyat anlamina gelir, bir varligin belirli bir zaman araligi icin hacme gore agirligi alinmis ortalama fiyatidir.
+
+Volume: Belirli bir zaman diliminde islem goren menkul kiymet tutari. Her alici icin bir satici var ve her islem toplam hacim sayisina katkida bulunuyor.
+
+Turnover: Hisse senedinin o gune kadar toplam cirosu.
+
+Trades: Hisse senedi alim veya satim sayisi.
+
+Deliverable: Bir grup insandan (bugunden once demat hesabida bu hisseleri olan ve bugun satis yapan) baska bir grup insana (bu hisseleri satin almis olan ve bu hisseleri T+2 gunlerine kadar alacak olan) hareket eden hisse miktari. Demat hesabi(Hindistan Internet Borsasi)).
+
+%Deliverble: Bu hisse senedinin teslimat yuzdesi.
+
+VWAP'yi ozellikle guclu bir gosterge haline getiren ortalama fiyat hesaplamasinda hacmi kullanma seklidir.
+VWAP, hacmin gucuyle fiyat hareketini birlestirerek pratik ve kullanimi kolay bir gosterge yaratir. Alim satim yapanlar VWAP'yi bir trend onaylama ya da giris ve cikis noktalarini belirleme araci olarak kullanabilir.
+VWAP her gunun basinda sifirlanir. Alim satim yapmak istedigimizde, VWAP'in altinda almak ve ustunde satmak karlidir. Fiyatin bugunku degerinin ustunde mi alim yaptik yoksa altinda mi alim yaptik bunu belirlememizi saglar.
+Fiyat VWAP uzerinde ise, satmak icin iyi bir gun ici fiyattir. Fiyat VWAP'in altindaysa, satin almak icin iyi bir gun ici fiyatidir.
+
+##### Degiskenleri Aciklamada Kullanilan Ek Bilgi Kaynaklari:
+https://www.investopedia.com/articles/trading/11/trading-with-vwap-mvwap.asp
+https://www.binance.vision/tr/economics/volume-weighted-average-price-vwap-explained
+
+
+Regresyon modelimizi kuralim;
+
+VWAP, hacmin gucuyle fiyat hareketini birlestirerek pratik ve kullanimi kolay bir gosterge yaratir. Bagimli degiskenimiz VWAP tir.(Yanit degiskeni)
+Aciklayici degisken olarak da Volume,High,Low,Close,Last kullanarak regresyon modeli kuralim, zaman serisi icin year degiskenini modele dahil etmiyoruz ;
+
+```{r zaman serisi model, message=FALSE, warning=FALSE}
+model<-lm(VWAP~Volume+
+            High+
+           Low+
+            Close+
+            Last,data=NSTS)
+```
+
+
+```{r zaman serisi ozet, message=FALSE, warning=FALSE}
+summary(model)
+```
+
+Regresyon modelimiz icin p-value degerimiz yaklasik olarak 0 dir ,0.05 den kucuk oldugu icin H0 hipotezimiz reddedilir yani kurulan regresyon modeli anlamlidir.
+Kurdugum regresyon modelinde VWAP i en cok etkileyen degiskenleri kullandigim icin Adjusted R-squared degerim  0.9999 , yani 1 e cok yakin bir deger cikmistir.
+
+Otokorelasyon hatalar ile bir kaydirilmis hatalar arasindaki otokorelasyondur.Korelasyon iki degisken arasindaki iliskiyi gosterir.
+Korelasyon anlamliligi testine t istatistigi ile bakilir.
+
+Bir gecikmeliler ile hatalarin sacinim grafigini cizdirelim;
+
+```{r bir gecikmeliler ile sacinim grafigi, message=FALSE, warning=FALSE}
+n<-length(residuals(model))
+plot(tail(residuals(model),n-1),
+     head(residuals(model),n-1),
+     xlab = expression(hat(epsilon)[i]),
+     ylab=expression(hat(epsilon)[i+1]),main="Bir Gecimeliler Ile Hatalarin Sacinim Grafigi",col="purple")
+```
+
+Gecikmeli artiklar icin kuyruk kismindan ve bas kismindan birer tane atip ikisi arasinda sacinim grafigi cizdirdik.
+Hicbir model bilmiyorken iliskiyi anlamak icin birini yanit degiskeni birini aciklayici degisken yapip regresyon modeli kurulur. 
+Eger model anlamli cikarsa aralarindaki iliski anlamlidir denir.Korelasyon testi ile daha net sonuc gorebiliriz.
+
+```{r korelasyon testi, message=FALSE, warning=FALSE}
+
+cor.test(tail(residuals(model),n-1),
+         head(residuals(model),n-1))
+```
+
+Korelasyon testi sonucumuza gore p-value=0.4645 ,0.05 den buyuk oldugu icin hatalar ile bir gecikmeliler arasinda iliski yoktur.
+
+#### DURBIN -WATSON TEST ISTATISTIGI
+
+H0 : Otokorelasyon yoktur.
+H1 : Otokorelasyon vardir.
+
+H0 RED ise otokorelasyon vardir.
+ H0 KABUL ise otokorelasyon yoktur.
+Modelin anlamliligina bakariz.
+
+```{r Durbin-Watson Test, message=FALSE, warning=FALSE}
+library(lmtest)
+dwtest(VWAP~Volume+
+            High+
+           Low+
+            Close+
+            Last,data=NSTS)
+```
+
+Durbin Watson testimizin sonucuna gore p-value=0.2024,0.05 den buyuk oldugundan H0 hipotezi kabul edilir yani otokorelasyon yoktur.
+
+Durbin-watson testi gecikmelere sadece birinci dereceden bakiyor bu yuzden daha yuksek derecelerden gecikmelere bakmak icin Breusch Godfrey testi yapilir.
+
+
+#### BREUSCH-GOLDFREY TEST ISTATISTIGI
+
+H0 : Otokorelasyon yoktur.
+H1 : Otokorelasyon vardir.
+
+H0 KABUL Otokorelasyon yok.
+H0 RED Otokorelasyon var.
+Modelin anlamliligina degil gecikmelilerin kastsayilarinin modele kattigi anlamlara bakariz.
+
+```{r Breusch Goldfrey Test, message=FALSE, warning=FALSE}
+library(lmtest)
+bgtest(VWAP~Volume+
+            High+
+           Low+
+            Close+
+            Last,data=NSTS)
+```
+
+Breusch Goldfrey testimizin sonucuna gore p-value=0.4555 ,0.05 den buyuk oldugundan h0 hipotezi kabul edilir yani otokorelasyon yoktur.
+
+
